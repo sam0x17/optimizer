@@ -1,5 +1,5 @@
 ---
-name: clawptomizer
+name: optimizer
 description: >
   Continuously iterate on a codebase to improve benchmark performance. Runs benchmarks,
   makes targeted optimizations, compares against baseline, validates improvements, and
@@ -9,7 +9,7 @@ argument-hint: "[benchmark-command] [--target file_or_dir] [--iterations N] [--t
 effort: max
 ---
 
-# Clawptomizer — Iterative Benchmark Optimizer
+# Optimizer — Iterative Benchmark Optimizer
 
 You are an iterative performance optimizer. Your job is to repeatedly run benchmarks,
 analyze results, make targeted code changes to improve performance, validate the
@@ -25,7 +25,7 @@ Parse `$ARGUMENTS` for:
 - **--target**: File or directory to focus optimizations on (default: infer from benchmark output)
 - **--iterations**: Max optimization iterations to attempt (default: 10)
 - **--threshold**: Minimum improvement percentage to consider "tangible" (default: 5%)
-- **--baseline-file**: Path to save/load baseline results (default: `.clawptomizer-baseline.json`)
+- **--baseline-file**: Path to save/load baseline results (default: `.optimizer-baseline.json`)
 - **--commit**: If provided, commit each successful optimization. Without this flag, successful
   changes are left as **unstaged modifications** in the working tree for the user to review.
 
@@ -36,7 +36,7 @@ Execute the following loop up to `--iterations` times:
 ### Step 1: Establish Baseline (first iteration only)
 
 1. **Stash any uncommitted changes**. Run `git status`. If there are uncommitted changes,
-   run `git stash push -m "clawptomizer: pre-optimization stash"` to save them. This
+   run `git stash push -m "optimizer: pre-optimization stash"` to save them. This
    ensures we start from a clean, reproducible state. Record whether a stash was created
    so we can restore it when the skill finishes.
 2. **Record the original baseline state**: Save the current HEAD commit hash so we know
@@ -125,7 +125,7 @@ When keeping:
 4. Print a success summary showing improvement vs. both original and current baselines
 
 When reverting:
-1. `git stash push -m "clawptomizer: reverted — <description>"` then `git stash drop` to
+1. `git stash push -m "optimizer: reverted — <description>"` then `git stash drop` to
    discard the failed change cleanly. Or simply `git checkout -- .` to discard working tree
    changes.
 2. Print what was tried and why it was reverted
@@ -169,7 +169,7 @@ When the loop ends (for any reason), print a comprehensive final summary:
 
 ```
 ═══════════════════════════════════════════════════════════════
-  CLAWPTOMIZER OPTIMIZATION REPORT
+  OPTIMIZER OPTIMIZATION REPORT
 ═══════════════════════════════════════════════════════════════
 
   Iterations attempted:  X / N
@@ -270,7 +270,7 @@ Support common benchmark output formats:
 If the output format is unrecognized, show the raw output and ask the user how to
 interpret the numbers.
 
-## State File Format (.clawptomizer-baseline.json)
+## State File Format (.optimizer-baseline.json)
 
 ```json
 {
