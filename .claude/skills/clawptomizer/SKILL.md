@@ -162,7 +162,7 @@ continues after a reset with a fresh approach.
 
 ### Step 7: Final Report
 
-When the loop ends, print a comprehensive report:
+When the loop ends (for any reason), print a comprehensive final summary:
 
 ```
 ═══════════════════════════════════════════════════════════════
@@ -175,16 +175,23 @@ When the loop ends, print a comprehensive report:
   Full resets:           R
   Contention re-runs:    C
 
-  BENCHMARK RESULTS (all comparisons vs. ORIGINAL baseline):
+  PERFORMANCE SUMMARY
+  ───────────────────
+  Overall improvement:   XX.X% faster (geometric mean across all benchmarks)
+
+  Per-benchmark breakdown (all comparisons vs. ORIGINAL baseline):
   ┌──────────────────────┬──────────┬──────────┬─────────────┐
   │ Benchmark            │ Original │ Final    │ Change      │
   ├──────────────────────┼──────────┼──────────┼─────────────┤
-  │ bench_name           │ 100ms    │  85ms    │ -15% faster │
+  │ bench_name           │ 100ms    │  85ms    │ -15.0%  ✓   │
+  │ bench_name_2         │  50ms    │  48ms    │  -4.0%  ✓   │
+  │ bench_name_3         │  20ms    │  20ms    │  +0.0%  ·   │
   └──────────────────────┴──────────┴──────────┴─────────────┘
+  Legend: ✓ improved  · unchanged  ✗ regressed
 
-  CHANGES MADE:
-  - <commit hash>: perf: <description> (−X% vs original)
-  - <commit hash>: perf: <description> (−X% vs original)
+  SUCCESSFUL OPTIMIZATIONS:
+  1. <description> (−X.X% on bench_name, −Y.Y% on bench_name_2)
+  2. <description> (−X.X% on bench_name)
 
   ATTEMPTED BUT REVERTED:
   - <description>: <reason for revert>
@@ -195,8 +202,21 @@ When the loop ends, print a comprehensive report:
   CONTENTION EVENTS:
   - Iteration N: <description, resolution>
 
+  FILES CHANGED:
+  - path/to/file.rs (+N −M lines)
+  - path/to/other.rs (+N −M lines)
+
 ═══════════════════════════════════════════════════════════════
 ```
+
+The **overall improvement** metric is computed as the geometric mean of the percentage
+changes across all benchmarks. This gives a single number that fairly represents the
+aggregate improvement without being skewed by outliers. Use ✓/·/✗ markers to make it
+easy to scan which benchmarks improved, held steady, or regressed.
+
+Always print this report, even if no improvements were achieved (in which case the
+summary should clearly state that). If the skill was interrupted or stopped early,
+still print whatever data is available.
 
 ## Important Rules
 
