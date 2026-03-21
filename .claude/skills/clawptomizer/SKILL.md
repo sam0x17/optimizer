@@ -26,6 +26,8 @@ Parse `$ARGUMENTS` for:
 - **--iterations**: Max optimization iterations to attempt (default: 10)
 - **--threshold**: Minimum improvement percentage to consider "tangible" (default: 5%)
 - **--baseline-file**: Path to save/load baseline results (default: `.clawptomizer-baseline.json`)
+- **--commit**: If provided, commit each successful optimization. Without this flag, successful
+  changes are left as **unstaged modifications** in the working tree for the user to review.
 
 ## Core Loop
 
@@ -33,11 +35,10 @@ Execute the following loop up to `--iterations` times:
 
 ### Step 1: Establish Baseline (first iteration only)
 
-1. **Ensure clean git state**. Check `git status`. If there are uncommitted changes, ask the
-   user whether to stash, commit, or abort.
-2. **Record the original baseline commit**: Save the current HEAD commit hash. This is the
-   snapshot we can always return to via full reset. Store it in the state file as
-   `original_baseline_commit`.
+1. **Check git state**. Run `git status`. If there are uncommitted changes, warn the user
+   but do NOT stash, commit, or modify git state — just note the current state.
+2. **Record the original baseline commit**: Save the current HEAD commit hash so we know
+   what to diff against. Store it in the state file as `original_baseline_commit`.
 3. **Run the benchmark suite** using the benchmark command. Capture the full output.
 4. **Parse the results** into a structured format:
    - For each benchmark/test: name, metric (time, throughput, ops/sec, etc.), value, unit
@@ -63,7 +64,9 @@ Execute the following loop up to `--iterations` times:
 
 ### Step 3: Implement the Optimization
 
-1. **Create a git checkpoint**: `git stash` or note the current HEAD.
+1. **Save a snapshot for rollback**: Copy the files you're about to modify so you can restore
+   them if the change regresses. Do NOT use `git stash`, `git checkout`, or any git-mutating
+   command — just keep the original content in memory or a temp file.
 2. **Make the code change**. Keep changes minimal and focused on a single optimization.
    - Do NOT change the benchmarks themselves (that's cheating).
    - Do NOT break the public API unless the user explicitly allows it.
@@ -116,24 +119,28 @@ Execute the following loop up to `--iterations` times:
 - Cumulative changes have made the code significantly more complex without measurable gain.
 
 When keeping:
-1. Commit the change with message: `perf: <description of optimization>`
+1. **If `--commit` was provided**: Commit the change with message: `perf: <description of optimization>`
+   **Otherwise**: Leave the change as unstaged modifications. Print what files were changed.
 2. Update the **current baseline** to the new results (never overwrite the original baseline)
 3. Print a success summary showing improvement vs. both original and current baselines
 
 When reverting:
-1. `git checkout -- .` or `git stash pop` to restore previous state
+1. **Restore the saved file snapshots** from Step 3 — write the original file contents back.
+   Do NOT use `git checkout`, `git restore`, or any git command to revert.
 2. Print what was tried and why it was reverted
 3. Add this optimization to a "tried and failed" list to avoid retrying
 
 When doing a full reset:
-1. Identify the git commit/tag of the original baseline state
-2. `git reset --hard <original-baseline-commit>` to return to the starting point
-3. **Re-run the baseline benchmarks** to confirm we're back to the original numbers
+1. **Restore ALL files** to their content at the time of the original baseline (use the
+   saved snapshots, not git commands). If `--commit` was used and changes were committed,
+   revert by writing the original file contents back — do NOT use `git reset --hard`,
+   `git rebase`, `git commit --amend`, or any commit-rewriting command.
+2. **Re-run the baseline benchmarks** to confirm we're back to the original numbers
    (the environment may have changed since the first run)
-4. Update the current baseline to match the fresh baseline numbers
-5. Clear the consecutive-failure counter
-6. Print a clear message: `FULL RESET — returned to original code, re-established baseline`
-7. Continue the optimization loop with a fresh perspective — avoid the same strategies
+3. Update the current baseline to match the fresh baseline numbers
+4. Clear the consecutive-failure counter
+5. Print a clear message: `FULL RESET — returned to original code, re-established baseline`
+6. Continue the optimization loop with a fresh perspective — avoid the same strategies
    that led to the reset. Consult the "tried and failed" list and try a fundamentally
    different approach.
 
@@ -200,7 +207,8 @@ When the loop ends, print a comprehensive report:
 5. **Be honest about results** — report noise, flaky benchmarks, and uncertainty.
 6. **Respect the user's code style** — optimizations should look like they belong.
 7. **Explain your reasoning** — the user should learn from each optimization attempt.
-8. **Keep a clean git history** — each successful optimization gets its own commit.
+8. **Keep a clean git history** — when `--commit` is used, each successful optimization
+   gets its own commit. Never squash, amend, or rewrite these commits.
 9. **Run benchmarks multiple times** if results are noisy (variance > 5%), and use
    the median.
 10. **Save state** so the process can be resumed if interrupted.
@@ -216,6 +224,13 @@ When the loop ends, print a comprehensive report:
 14. **Full reset when drifting** — if cumulative changes aren't helping or we've
     regressed past the original baseline, reset to the original code and start fresh
     with a different strategy rather than piling more changes on a bad foundation.
+15. **Never overwrite or rewrite commits** — NEVER use `git reset --hard`, `git rebase`,
+    `git commit --amend`, `git push --force`, or any command that rewrites git history.
+    Existing commits are sacred. Reverts and resets must be done by writing file contents
+    back, not by manipulating git history.
+16. **No commits by default** — only create git commits when the user passes `--commit`.
+    Otherwise, leave all changes as unstaged working tree modifications for the user to
+    review and commit themselves.
 
 ## Benchmark Output Parsing
 
