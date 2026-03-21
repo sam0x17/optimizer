@@ -35,8 +35,9 @@ Execute the following loop up to `--iterations` times:
 
 ### Step 1: Establish Baseline (first iteration only)
 
-1. **Check git state**. Run `git status`. If there are uncommitted changes, warn the user
-   but do NOT stash, commit, or modify git state — just note the current state.
+1. **Require clean git state**. Run `git status`. If there are ANY uncommitted changes
+   (staged, unstaged, or untracked files that would be affected), **stop immediately**
+   and tell the user to commit or stash their changes first. Do NOT proceed.
 2. **Record the original baseline commit**: Save the current HEAD commit hash so we know
    what to diff against. Store it in the state file as `original_baseline_commit`.
 3. **Run the benchmark suite** using the benchmark command. Capture the full output.
@@ -64,9 +65,9 @@ Execute the following loop up to `--iterations` times:
 
 ### Step 3: Implement the Optimization
 
-1. **Save a snapshot for rollback**: Copy the files you're about to modify so you can restore
-   them if the change regresses. Do NOT use `git stash`, `git checkout`, or any git-mutating
-   command — just keep the original content in memory or a temp file.
+1. **Make the code change directly** in the working tree. Since we started from a clean git
+   state and the original baseline commit is recorded, we can always `git checkout -- .` to
+   undo uncommitted changes, or `git reset --hard <original-baseline-commit>` for a full reset.
 2. **Make the code change**. Keep changes minimal and focused on a single optimization.
    - Do NOT change the benchmarks themselves (that's cheating).
    - Do NOT break the public API unless the user explicitly allows it.
@@ -125,16 +126,12 @@ When keeping:
 3. Print a success summary showing improvement vs. both original and current baselines
 
 When reverting:
-1. **Restore the saved file snapshots** from Step 3 — write the original file contents back.
-   Do NOT use `git checkout`, `git restore`, or any git command to revert.
+1. `git checkout -- .` to discard uncommitted changes and restore to the last clean state
 2. Print what was tried and why it was reverted
 3. Add this optimization to a "tried and failed" list to avoid retrying
 
 When doing a full reset:
-1. **Restore ALL files** to their content at the time of the original baseline (use the
-   saved snapshots, not git commands). If `--commit` was used and changes were committed,
-   revert by writing the original file contents back — do NOT use `git reset --hard`,
-   `git rebase`, `git commit --amend`, or any commit-rewriting command.
+1. `git reset --hard <original-baseline-commit>` to return to the original starting point
 2. **Re-run the baseline benchmarks** to confirm we're back to the original numbers
    (the environment may have changed since the first run)
 3. Update the current baseline to match the fresh baseline numbers
@@ -224,10 +221,9 @@ When the loop ends, print a comprehensive report:
 14. **Full reset when drifting** — if cumulative changes aren't helping or we've
     regressed past the original baseline, reset to the original code and start fresh
     with a different strategy rather than piling more changes on a bad foundation.
-15. **Never overwrite or rewrite commits** — NEVER use `git reset --hard`, `git rebase`,
-    `git commit --amend`, `git push --force`, or any command that rewrites git history.
-    Existing commits are sacred. Reverts and resets must be done by writing file contents
-    back, not by manipulating git history.
+15. **Never rewrite committed history** — NEVER use `git rebase`, `git commit --amend`,
+    `git push --force`, or any command that rewrites existing commits. `git reset --hard`
+    is allowed ONLY to return to the original baseline commit (discarding uncommitted work).
 16. **No commits by default** — only create git commits when the user passes `--commit`.
     Otherwise, leave all changes as unstaged working tree modifications for the user to
     review and commit themselves.
