@@ -17,16 +17,18 @@ by running a benchmark loop:
 ## Usage
 
 ```
-/optimize <benchmark-command> [--target <path>] [--iterations <N>] [--threshold <N%>]
+/optimize [benchmark-command]
 ```
 
 ### Examples
 
 ```
 /optimize cargo bench
-/optimize "go test -bench=. ./..." --threshold 10%
-/optimize "npm run bench" --target src/parser --iterations 20
-/optimize pytest --benchmark-only --iterations 5
+/optimize cargo bench --bench pomap_bench
+/optimize ./benchmark.sh
+/optimize "go test -bench=. ./..."
+/optimize npm run bench
+/optimize pytest --benchmark-only
 ```
 
 If no benchmark command is given, the skill will auto-detect common benchmark setups.

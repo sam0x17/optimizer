@@ -5,7 +5,7 @@ description: >
   makes targeted optimizations, compares against baseline, validates improvements, and
   reverts regressions. Keeps looping until tangible improvements are achieved.
   Use when the user wants to optimize code performance through iterative benchmarking.
-argument-hint: "[benchmark-command] [--target file_or_dir] [--iterations N] [--threshold N%]"
+argument-hint: "[benchmark-command]"
 effort: max
 ---
 
@@ -17,17 +17,23 @@ improvements, and revert any regressions — looping until tangible gains are ac
 
 ## Arguments
 
-Parse `$ARGUMENTS` for:
-- **benchmark command**: The shell command to run the benchmark suite (first positional arg).
-  If not provided, auto-detect by looking for common patterns: `cargo bench`, `go test -bench`,
-  `pytest --benchmark`, `npm run bench`, `make bench`, a `bench` script in package.json,
-  or a `benchmarks/` directory. Ask the user if nothing is found.
-- **--target**: File or directory to focus optimizations on (default: infer from benchmark output)
-- **--iterations**: Max optimization iterations to attempt (default: 10)
-- **--threshold**: Minimum improvement percentage to consider "tangible" (default: 5%)
-- **--baseline-file**: Path to save/load baseline results (default: `.optimizer-baseline.json`)
-- **--commit**: If provided, commit each successful optimization. Without this flag, successful
-  changes are left as **unstaged modifications** in the working tree for the user to review.
+`$ARGUMENTS` is the **benchmark command** — the shell command to run the benchmark suite.
+The entire argument string is the command (e.g., `cargo bench --bench pomap_bench`,
+`./benchmark.sh`, `go test -bench=. ./...`).
+
+If no argument is provided, auto-detect by looking for common patterns: `cargo bench`,
+`go test -bench`, `pytest --benchmark`, `npm run bench`, `make bench`, a `bench` script
+in package.json, or a `benchmarks/` directory. Ask the user if nothing is found.
+
+### Defaults
+
+These are not configurable via arguments — the skill uses sensible defaults:
+- **target**: Inferred from benchmark output (which files/functions are being benchmarked)
+- **iterations**: 10 max optimization iterations
+- **threshold**: 5% minimum improvement to consider "tangible"
+- **baseline-file**: `.optimizer-baseline.json`
+- **commit**: Off — successful changes are left as **unstaged modifications** in the working
+  tree for the user to review. The user can ask the skill to commit in the conversation.
 
 ## Core Loop
 
