@@ -1,10 +1,10 @@
-# Clawptomizer
+# Optimizer
 
 An iterative benchmark optimization skill for Claude Code.
 
 ## What It Does
 
-Clawptomizer is a Claude Code skill (`/clawptomizer`) that continuously optimizes code
+Optimizer is a Claude Code skill (`/optimizer`) that continuously optimizes code
 by running a benchmark loop:
 
 1. **Baseline** — Run benchmarks and record starting performance
@@ -17,21 +17,21 @@ by running a benchmark loop:
 ## Usage
 
 ```
-/clawptomizer <benchmark-command> [--target <path>] [--iterations <N>] [--threshold <N%>]
+/optimizer <benchmark-command> [--target <path>] [--iterations <N>] [--threshold <N%>]
 ```
 
 ### Examples
 
 ```
-/clawptomizer cargo bench
-/clawptomizer "go test -bench=. ./..." --threshold 10%
-/clawptomizer "npm run bench" --target src/parser --iterations 20
-/clawptomizer pytest --benchmark-only --iterations 5
+/optimizer cargo bench
+/optimizer "go test -bench=. ./..." --threshold 10%
+/optimizer "npm run bench" --target src/parser --iterations 20
+/optimizer pytest --benchmark-only --iterations 5
 ```
 
 If no benchmark command is given, the skill will auto-detect common benchmark setups.
 
 ## Files
 
-- `.claude/skills/clawptomizer/SKILL.md` — The skill definition
-- `.clawptomizer-baseline.json` — State file created during optimization (gitignored)
+- `.claude/skills/optimizer/SKILL.md` — The skill definition
+- `.optimizer-baseline.json` — State file created during optimization (gitignored)
