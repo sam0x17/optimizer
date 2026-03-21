@@ -35,11 +35,12 @@ Execute the following loop up to `--iterations` times:
 
 ### Step 1: Establish Baseline (first iteration only)
 
-1. **Require clean git state**. Run `git status`. If there are ANY uncommitted changes
-   (staged, unstaged, or untracked files that would be affected), **stop immediately**
-   and tell the user to commit or stash their changes first. Do NOT proceed.
-2. **Record the original baseline commit**: Save the current HEAD commit hash so we know
-   what to diff against. Store it in the state file as `original_baseline_commit`.
+1. **Stash any uncommitted changes**. Run `git status`. If there are uncommitted changes,
+   run `git stash push -m "clawptomizer: pre-optimization stash"` to save them. This
+   ensures we start from a clean, reproducible state. Record whether a stash was created
+   so we can restore it when the skill finishes.
+2. **Record the original baseline state**: Save the current HEAD commit hash so we know
+   what clean state to return to. Store it in the state file as `original_baseline_commit`.
 3. **Run the benchmark suite** using the benchmark command. Capture the full output.
 4. **Parse the results** into a structured format:
    - For each benchmark/test: name, metric (time, throughput, ops/sec, etc.), value, unit
@@ -65,10 +66,7 @@ Execute the following loop up to `--iterations` times:
 
 ### Step 3: Implement the Optimization
 
-1. **Make the code change directly** in the working tree. Since we started from a clean git
-   state and the original baseline commit is recorded, we can always `git checkout -- .` to
-   undo uncommitted changes, or `git reset --hard <original-baseline-commit>` for a full reset.
-2. **Make the code change**. Keep changes minimal and focused on a single optimization.
+1. **Make the code change** in the working tree. Keep changes minimal and focused on a single optimization.
    - Do NOT change the benchmarks themselves (that's cheating).
    - Do NOT break the public API unless the user explicitly allows it.
    - Do NOT introduce unsafe code unless the user explicitly allows it.
@@ -120,18 +118,23 @@ Execute the following loop up to `--iterations` times:
 - Cumulative changes have made the code significantly more complex without measurable gain.
 
 When keeping:
-1. **If `--commit` was provided**: Commit the change with message: `perf: <description of optimization>`
-   **Otherwise**: Leave the change as unstaged modifications. Print what files were changed.
-2. Update the **current baseline** to the new results (never overwrite the original baseline)
-3. Print a success summary showing improvement vs. both original and current baselines
+1. `git stash push -m "clawptomizer: <description of optimization>"` to save the successful
+   change. This preserves the optimization without creating a commit.
+2. Immediately `git stash pop` to restore it to the working tree so the next iteration
+   builds on top of it.
+3. **If `--commit` was provided**: Also commit with message: `perf: <description of optimization>`
+4. Update the **current baseline** to the new results (never overwrite the original baseline)
+5. Print a success summary showing improvement vs. both original and current baselines
 
 When reverting:
-1. `git checkout -- .` to discard uncommitted changes and restore to the last clean state
+1. `git stash push -m "clawptomizer: reverted — <description>"` then `git stash drop` to
+   discard the failed change cleanly. Or simply `git checkout -- .` to discard working tree
+   changes.
 2. Print what was tried and why it was reverted
 3. Add this optimization to a "tried and failed" list to avoid retrying
 
 When doing a full reset:
-1. `git reset --hard <original-baseline-commit>` to return to the original starting point
+1. `git checkout -- .` to discard any uncommitted working tree changes
 2. **Re-run the baseline benchmarks** to confirm we're back to the original numbers
    (the environment may have changed since the first run)
 3. Update the current baseline to match the fresh baseline numbers
@@ -222,11 +225,14 @@ When the loop ends, print a comprehensive report:
     regressed past the original baseline, reset to the original code and start fresh
     with a different strategy rather than piling more changes on a bad foundation.
 15. **Never rewrite committed history** — NEVER use `git rebase`, `git commit --amend`,
-    `git push --force`, or any command that rewrites existing commits. `git reset --hard`
-    is allowed ONLY to return to the original baseline commit (discarding uncommitted work).
+    `git push --force`, or any command that rewrites existing commits.
 16. **No commits by default** — only create git commits when the user passes `--commit`.
-    Otherwise, leave all changes as unstaged working tree modifications for the user to
-    review and commit themselves.
+    Otherwise, use `git stash` to manage changes and leave final results as unstaged
+    working tree modifications for the user to review and commit themselves.
+17. **Restore user's stash on exit** — if the skill stashed uncommitted changes at startup,
+    pop that stash when the skill finishes (after all optimizations are applied or the
+    loop ends). The user should get back their original uncommitted work on top of any
+    optimizations.
 
 ## Benchmark Output Parsing
 
