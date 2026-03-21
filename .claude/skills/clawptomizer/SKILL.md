@@ -70,7 +70,7 @@ Execute the following loop up to `--iterations` times:
    - Do NOT change the benchmarks themselves (that's cheating).
    - Do NOT break the public API unless the user explicitly allows it.
    - Do NOT introduce unsafe code unless the user explicitly allows it.
-3. **Verify the code compiles/parses** by running the build step if applicable.
+2. **Verify the code compiles/parses** by running the build step if applicable.
 
 ### Step 4: Validate
 
@@ -118,13 +118,11 @@ Execute the following loop up to `--iterations` times:
 - Cumulative changes have made the code significantly more complex without measurable gain.
 
 When keeping:
-1. `git stash push -m "clawptomizer: <description of optimization>"` to save the successful
-   change. This preserves the optimization without creating a commit.
-2. Immediately `git stash pop` to restore it to the working tree so the next iteration
-   builds on top of it.
-3. **If `--commit` was provided**: Also commit with message: `perf: <description of optimization>`
-4. Update the **current baseline** to the new results (never overwrite the original baseline)
-5. Print a success summary showing improvement vs. both original and current baselines
+1. **Leave the changes in the working tree** — the next iteration builds on top of them.
+   No stash is needed; the changes are already where they need to be.
+2. **If `--commit` was provided**: Commit with message: `perf: <description of optimization>`
+3. Update the **current baseline** to the new results (never overwrite the original baseline)
+4. Print a success summary showing improvement vs. both original and current baselines
 
 When reverting:
 1. `git stash push -m "clawptomizer: reverted — <description>"` then `git stash drop` to
@@ -134,13 +132,18 @@ When reverting:
 3. Add this optimization to a "tried and failed" list to avoid retrying
 
 When doing a full reset:
-1. `git checkout -- .` to discard any uncommitted working tree changes
+1. `git checkout -- .` to discard any uncommitted working tree changes.
+   **Note**: If `--commit` was used, previously committed optimizations survive the reset
+   (they are part of the git history). This is intentional — committed changes are the
+   user's explicit choice to preserve. The reset only affects uncommitted work.
 2. **Re-run the baseline benchmarks** to confirm we're back to the original numbers
    (the environment may have changed since the first run)
 3. Update the current baseline to match the fresh baseline numbers
 4. Clear the consecutive-failure counter
-5. Print a clear message: `FULL RESET — returned to original code, re-established baseline`
-6. Continue the optimization loop with a fresh perspective — avoid the same strategies
+5. **Do NOT restore the pre-optimization stash** — that stash is only restored when
+   the skill finishes entirely (Step 7), not during intermediate resets.
+6. Print a clear message: `FULL RESET — returned to original code, re-established baseline`
+7. Continue the optimization loop with a fresh perspective — avoid the same strategies
    that led to the reset. Consult the "tried and failed" list and try a fundamentally
    different approach.
 
