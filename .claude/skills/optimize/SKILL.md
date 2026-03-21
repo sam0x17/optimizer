@@ -29,7 +29,6 @@ in package.json, or a `benchmarks/` directory. Ask the user if nothing is found.
 
 These are not configurable via arguments — the skill uses sensible defaults:
 - **target**: Inferred from benchmark output (which files/functions are being benchmarked)
-- **iterations**: 10 max optimization iterations
 - **threshold**: 5% minimum improvement to consider "tangible"
 - **baseline-file**: `.optimizer-baseline.json`
 - **commit**: Off — successful changes are left as **unstaged modifications** in the working
@@ -37,7 +36,7 @@ These are not configurable via arguments — the skill uses sensible defaults:
 
 ## Core Loop
 
-Execute the following loop up to `--iterations` times:
+Execute the following loop continuously until a stop condition is met (see Step 6):
 
 ### Step 1: Establish Baseline (first iteration only)
 
@@ -157,13 +156,11 @@ When doing a full reset:
 
 **Stop the loop if:**
 - Cumulative improvement vs. **original baseline** meets or exceeds the threshold target
-- Maximum iterations reached
 - No more viable optimization opportunities remain
 - Two full resets have already occurred (we've exhausted fundamentally different approaches)
 
 **Continue if:**
 - There are remaining optimization opportunities
-- Iterations remain
 - Cumulative improvement vs. **original baseline** hasn't met the target yet
 
 Note: Three consecutive reverts triggers a full reset (Step 5), NOT a stop. The loop
@@ -178,7 +175,7 @@ When the loop ends (for any reason), print a comprehensive final summary:
   OPTIMIZER OPTIMIZATION REPORT
 ═══════════════════════════════════════════════════════════════
 
-  Iterations attempted:  X / N
+  Iterations attempted:  X
   Successful changes:    Y
   Reverted changes:      Z
   Full resets:           R
