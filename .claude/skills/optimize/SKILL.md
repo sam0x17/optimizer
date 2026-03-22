@@ -1,10 +1,7 @@
 ---
 name: optimize
-description: >
-  Continuously iterate on a codebase to improve benchmark performance. Runs benchmarks,
-  makes targeted optimizations, compares against baseline, validates improvements, and
-  reverts regressions. Keeps looping until tangible improvements are achieved.
-  Use when the user wants to optimize code performance through iterative benchmarking.
+# prettier-ignore
+description: Continuously iterate on a codebase to improve benchmark performance. Runs benchmarks, makes targeted optimizations, compares against baseline, validates improvements, and reverts regressions. Keeps looping until tangible improvements are achieved. Use when the user wants to optimize code performance through iterative benchmarking.
 argument-hint: "[benchmark-command]"
 effort: max
 ---
