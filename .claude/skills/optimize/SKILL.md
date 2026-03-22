@@ -1,5 +1,5 @@
 ---
-name: optimizer
+name: optimize
 description: >
   Continuously iterate on a codebase to improve benchmark performance. Runs benchmarks,
   makes targeted optimizations, compares against baseline, validates improvements, and

@@ -10,7 +10,6 @@ rm -f "$out"
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
 cp .claude/skills/optimize/SKILL.md "$tmpdir/"
-cp CLAUDE.md "$tmpdir/"
 (cd "$tmpdir" && zip -r - .) > "$out"
 
 echo "Exported $out"
